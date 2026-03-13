@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VCA Uren Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #151820;
+      --surface2: #1c2030;
+      --border: #252a3a;
+      --accent: #4fffb0;
+      --accent2: #ff6b35;
+      --accent3: #7b61ff;
+      --text: #e8ecf4;
+      --muted: #5a6282;
+      --danger: #ff4757;
+      --warn: #ffd32a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Grid noise background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(79,255,176,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(79,255,176,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ─── HEADER ─── */
+    header {
+      padding: 32px 0 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .logo-area h1 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-area h1 span {
+      color: var(--accent);
+    }
+
+    .logo-area p {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+      letter-spacing: 0.08em;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-dot {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    .dot.ok { background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: pulse 2s infinite; }
+    .dot.err { background: var(--danger); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ─── CONFIG PANEL ─── */
+    .config-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin: 24px 0;
+      overflow: hidden;
+    }
+
+    .config-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .config-header:hover { background: var(--surface2); }
+
+    .config-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .config-icon {
+      width: 20px;
+      height: 20px;
+      color: var(--accent);
+    }
+
+    .toggle-arrow {
+      font-size: 12px;
+      color: var(--muted);
+      transition: transform 0.2s;
+    }
+
+    .config-body {
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 700px) {
+      .config-body { grid-template-columns: 1fr; }
+    }
+
+    .config-group {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .config-group h4 {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .field {
+      margin-bottom: 10px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    .field input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .field input:focus { border-color: var(--accent); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      letter-spacing: 0.02em;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0d0f14;
+    }
+
+    .btn-primary:hover {
+      background: #3de89d;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(79,255,176,0.3);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .config-actions {
+      padding: 0 20px 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    /* ─── FILTER BAR ─── */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+
+    .filter-bar select,
+    .filter-bar input[type="month"] {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 14px;
+      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .filter-bar select:focus,
+    .filter-bar input[type="month"]:focus {
+      border-color: var(--accent);
+    }
+
+    /* ─── KPI CARDS ─── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin: 24px 0;
+    }
+
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(79,255,176,0.3);
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+    }
+
+    .kpi-card.green::before { background: var(--accent); }
+    .kpi-card.orange::before { background: var(--accent2); }
+    .kpi-card.purple::before { background: var(--accent3); }
+    .kpi-card.red::before { background: var(--danger); }
+
+    .kpi-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .kpi-value {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .kpi-card.green .kpi-value { color: var(--accent); }
+    .kpi-card.orange .kpi-value { color: var(--accent2); }
+    .kpi-card.purple .kpi-value { color: var(--accent3); }
+    .kpi-card.red .kpi-value { color: var(--danger); }
+
+    .kpi-sub {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    /* ─── SECTION TITLE ─── */
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 28px 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ─── TABLE ─── */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      background: var(--surface2);
+    }
+
+    th {
+      text-align: left;
+      padding: 12px 16px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 13px 16px;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(37,42,58,0.5);
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(79,255,176,0.03); }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-ok { background: rgba(79,255,176,0.15); color: var(--accent); }
+    .badge-warn { background: rgba(255,211,42,0.15); color: var(--warn); }
+    .badge-danger { background: rgba(255,71,87,0.15); color: var(--danger); }
+    .badge-neutral { background: rgba(90,98,130,0.2); color: var(--muted); }
+
+    .mono { font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+
+    /* ─── CHART BAR ─── */
+    .bar-chart {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .bar-label {
+      font-size: 12px;
+      width: 140px;
+      flex-shrink: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .bar-track {
+      flex: 1;
+      height: 24px;
+      background: var(--surface2);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      padding-left: 10px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: #0d0f14;
+      transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      min-width: 40px;
+      background: var(--accent);
+    }
+
+    .bar-hours {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      width: 60px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* ─── LOADING ─── */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      gap: 12px;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── EMPTY / ERROR ─── */
+    .empty {
+      padding: 48px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .error-msg {
+      background: rgba(255,71,87,0.1);
+      border: 1px solid rgba(255,71,87,0.3);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      color: var(--danger);
+      margin: 12px 0;
+    }
+
+    /* ─── TABS ─── */
+    .tabs {
+      display: flex;
+      gap: 2px;
+      margin: 20px 0 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab {
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--muted);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.2s;
+      letter-spacing: 0.02em;
+    }
+
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ─── EXPIRY PROGRESS ─── */
+    .expiry-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .expiry-track {
+      width: 80px;
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .expiry-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 20px 0;
+      margin-top: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    footer p {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+
+    footer a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <div class="logo-area">
+      <h1>VCA <span>Dashboard</span></h1>
+      <p>XPS &times; MONEYBIRD · REAL-TIME ANALYSE</p>
+    </div>
+    <div class="header-actions">
+      <div class="status-dot" id="xps-status">
+        <div class="dot" id="xps-dot"></div>
+        XPS
+      </div>
+      <div class="status-dot" id="mb-status">
+        <div class="dot" id="mb-dot"></div>
+        Moneybird
+      </div>
+      <button class="btn btn-primary" onclick="loadAll()">
+        ↻ Vernieuwen
+      </button>
+    </div>
+  </header>
+
+  <!-- CONFIG PANEL -->
+  <div class="config-panel">
+    <div class="config-header" onclick="toggleConfig()">
+      <div class="config-header-left">
+        <svg class="config-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        API Configuratie
+      </div>
+      <span class="toggle-arrow" id="config-arrow">▼</span>
+    </div>
+    <div id="config-body" class="config-body" style="display:none">
+      <div class="config-group">
+        <h4>⚡ XPS (XPSLogic)</h4>
+        <div class="field">
+          <label>API Key</label>
+          <input type="password" id="xps-key" placeholder="xps_live_..." />
+        </div>
+        <div class="field">
+          <label>Base URL</label>
+          <input type="text" id="xps-url" value="https://secure.xpslogic.com/rps/root/api/v1" placeholder="https://secure.xpslogic.com/..." />
+        </div>
+        <div class="field">
+          <label>VCA Vaardigheid/Kenmerk naam</label>
+          <input type="text" id="xps-vca-field" value="VCA" placeholder="VCA" />
+        </div>
+      </div>
+      <div class="config-group">
+        <h4>💰 Moneybird</h4>
+        <div class="field">
+          <label>API Token</label>
+          <input type="password" id="mb-token" placeholder="mb_live_..." />
+        </div>
+        <div class="field">
+          <label>Administratie ID</label>
+          <input type="text" id="mb-admin" placeholder="123456789" />
+        </div>
+        <div class="field">
+          <label>VCA zoekterm (factuuromschrijving)</label>
+          <input type="text" id="mb-vca-term" value="VCA" placeholder="VCA" />
+        </div>
+      </div>
+    </div>
+    <div id="config-actions" class="config-actions" style="display:none">
+      <button class="btn btn-primary" onclick="saveConfig(); loadAll()">Opslaan &amp; Laden</button>
+      <button class="btn btn-secondary" onclick="toggleConfig()">Sluiten</button>
+    </div>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <label style="font-size:12px;color:var(--muted);font-family:'IBM Plex Mono',monospace">Periode:</label>
+    <input type="month" id="filter-from" />
+    <span style="color:var(--muted);font-size:12px">→</span>
+    <input type="month" id="filter-to" />
+    <button class="btn btn-secondary" style="padding:9px 16px;font-size:12px" onclick="loadAll()">Filter toepassen</button>
+    <div id="last-updated" style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted)"></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('overview')">Overzicht</div>
+    <div class="tab" onclick="switchTab('employees')">Medewerkers</div>
+    <div class="tab" onclick="switchTab('invoices')">Facturen</div>
+  </div>
+
+  <!-- TAB: OVERVIEW -->
+  <div id="tab-overview" class="tab-content active">
+
+    <!-- KPI CARDS -->
+    <div class="kpi-grid">
+      <div class="kpi-card green">
+        <div class="kpi-label">Totaal VCA Uren (gefactureerd)</div>
+        <div class="kpi-value" id="kpi-total-uren">—</div>
+        <div class="kpi-sub" id="kpi-total-sub">Laden...</div>
+      </div>
+      <div class="kpi-card orange">
+        <div class="kpi-label">Totale VCA Omzet</div>
+        <div class="kpi-value" id="kpi-omzet">—</div>
+        <div class="kpi-sub" id="kpi-omzet-sub">Laden...</div>
+      </div>
+      <div class="kpi-card purple">
+        <div class="kpi-label">Medewerkers met VCA</div>
+        <div class="kpi-value" id="kpi-medewerkers">—</div>
+        <div class="kpi-sub" id="kpi-med-sub">Laden...</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-label">VCA Verlopen / Bijna Verlopen</div>
+        <div class="kpi-value" id="kpi-verlopen">—</div>
+        <div class="kpi-sub" id="kpi-verl-sub">Binnen 90 dagen</div>
+      </div>
+    </div>
+
+    <!-- BAR CHART -->
+    <div class="section-title">VCA Uren per medewerker</div>
+    <div class="bar-chart">
+      <div id="bar-chart-content">
+        <div class="loading"><div class="spinner"></div> Data ophalen...</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TAB: EMPLOYEES -->
+  <div id="tab-employees" class="tab-content">
+    <div class="section-title">Medewerkers VCA Status</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Naam</th>
+            <th>VCA Type</th>
+            <th>Behaald op</th>
+            <th>Geldig t/m</th>
+            <th>Status</th>
+            <th>Geldigheid</th>
+            <th>Gefactureerde uren</th>
+          </tr>
+        </thead>
+        <tbody id="employees-table">
+          <tr><td colspan="7"><div class="loading"><div class="spinner"></div> Data ophalen...</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB: INVOICES -->
+  <div id="tab-invoices" class="tab-content">
+    <div class="section-title">Factuurregels met VCA</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Factuurnr.</th>
+            <th>Datum</th>
+            <th>Klant</th>
+            <th>Omschrijving</th>
+            <th>Uren</th>
+            <th>Bedrag</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="invoices-table">
+          <tr><td colspan="7"><div class="loading"><div class="spinner"></div> Data ophalen...</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="container" style="width:100%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+    <p>VCA Dashboard · XPS × Moneybird integratie</p>
+    <p>API sleutels worden alleen lokaal opgeslagen in <code>localStorage</code></p>
+  </div>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+let configOpen = false;
+let xpsEmployees = [];
+let mbInvoiceLines = [];
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  loadConfig();
+  setDefaultDates();
+
+  // Auto-load if config is present
+  const xpsKey = document.getElementById('xps-key').value;
+  const mbToken = document.getElementById('mb-token').value;
+  if (xpsKey || mbToken) {
+    loadAll();
+  } else {
+    // Open config if nothing set
+    toggleConfig();
+    showPlaceholders();
+  }
+});
+
+function setDefaultDates() {
+  const now = new Date();
+  const from = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+  document.getElementById('filter-from').value = toMonthStr(from);
+  document.getElementById('filter-to').value = toMonthStr(now);
+}
+
+function toMonthStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function showPlaceholders() {
+  document.getElementById('kpi-total-uren').textContent = '—';
+  document.getElementById('kpi-total-sub').textContent = 'Configureer API-sleutels';
+  document.getElementById('kpi-omzet').textContent = '—';
+  document.getElementById('kpi-omzet-sub').textContent = 'Configureer API-sleutels';
+  document.getElementById('kpi-medewerkers').textContent = '—';
+  document.getElementById('kpi-med-sub').textContent = 'Configureer API-sleutels';
+  document.getElementById('kpi-verlopen').textContent = '—';
+  document.getElementById('bar-chart-content').innerHTML = '<div class="empty">Voer je API-sleutels in en klik op "Opslaan &amp; Laden"</div>';
+  document.getElementById('employees-table').innerHTML = '<tr><td colspan="7"><div class="empty">Geen data</div></td></tr>';
+  document.getElementById('invoices-table').innerHTML = '<tr><td colspan="7"><div class="empty">Geen data</div></td></tr>';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════
+function toggleConfig() {
+  configOpen = !configOpen;
+  document.getElementById('config-body').style.display = configOpen ? 'grid' : 'none';
+  document.getElementById('config-actions').style.display = configOpen ? 'flex' : 'none';
+  document.getElementById('config-arrow').textContent = configOpen ? '▲' : '▼';
+}
+
+function saveConfig() {
+  const fields = ['xps-key','xps-url','xps-vca-field','mb-token','mb-admin','mb-vca-term'];
+  fields.forEach(id => {
+    const val = document.getElementById(id).value;
+    if (val) localStorage.setItem('vca_' + id, val);
+  });
+}
+
+function loadConfig() {
+  const fields = ['xps-key','xps-url','xps-vca-field','mb-token','mb-admin','mb-vca-term'];
+  fields.forEach(id => {
+    const saved = localStorage.getItem('vca_' + id);
+    if (saved) document.getElementById(id).value = saved;
+  });
+}
+
+function getConfig() {
+  return {
+    xpsKey: document.getElementById('xps-key').value.trim(),
+    xpsUrl: document.getElementById('xps-url').value.trim(),
+    xpsVcaField: document.getElementById('xps-vca-field').value.trim() || 'VCA',
+    mbToken: document.getElementById('mb-token').value.trim(),
+    mbAdmin: document.getElementById('mb-admin').value.trim(),
+    mbVcaTerm: document.getElementById('mb-vca-term').value.trim() || 'VCA',
+    fromDate: document.getElementById('filter-from').value,
+    toDate: document.getElementById('filter-to').value,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const tabs = ['overview','employees','invoices'];
+    t.classList.toggle('active', tabs[i] === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => {
+    c.classList.toggle('active', c.id === 'tab-' + name);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MAIN LOAD
+// ═══════════════════════════════════════════════════════════
+async function loadAll() {
+  const cfg = getConfig();
+  setStatus('xps-dot', 'loading');
+  setStatus('mb-dot', 'loading');
+
+  xpsEmployees = [];
+  mbInvoiceLines = [];
+
+  const [xpsResult, mbResult] = await Promise.allSettled([
+    cfg.xpsKey ? fetchXPS(cfg) : Promise.resolve([]),
+    cfg.mbToken && cfg.mbAdmin ? fetchMoneybird(cfg) : Promise.resolve([])
+  ]);
+
+  if (xpsResult.status === 'fulfilled') {
+    xpsEmployees = xpsResult.value;
+    setStatus('xps-dot', xpsEmployees.length > 0 ? 'ok' : 'neutral');
+  } else {
+    console.error('XPS error:', xpsResult.reason);
+    setStatus('xps-dot', 'err');
+    showError('XPS fout: ' + xpsResult.reason);
+  }
+
+  if (mbResult.status === 'fulfilled') {
+    mbInvoiceLines = mbResult.value;
+    setStatus('mb-dot', mbInvoiceLines.length >= 0 ? 'ok' : 'neutral');
+  } else {
+    console.error('Moneybird error:', mbResult.reason);
+    setStatus('mb-dot', 'err');
+    showError('Moneybird fout: ' + mbResult.reason);
+  }
+
+  renderDashboard(cfg);
+  document.getElementById('last-updated').textContent =
+    'Bijgewerkt: ' + new Date().toLocaleTimeString('nl-NL');
+}
+
+function setStatus(dotId, state) {
+  const dot = document.getElementById(dotId);
+  dot.className = 'dot';
+  if (state === 'ok') dot.classList.add('ok');
+  if (state === 'err') dot.classList.add('err');
+}
+
+function showError(msg) {
+  const el = document.createElement('div');
+  el.className = 'error-msg';
+  el.textContent = msg;
+  document.querySelector('.filter-bar').after(el);
+  setTimeout(() => el.remove(), 8000);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  XPS API
+// ═══════════════════════════════════════════════════════════
+async function fetchXPS(cfg) {
+  // XPS REST API – haal medewerkers op met VCA vaardigheid
+  // Endpoint: GET /employees?filter[skill]=VCA of /persons?include=skills
+  // Pas aan op basis van jouw XPS installatie
+  const headers = {
+    'Authorization': `Bearer ${cfg.xpsKey}`,
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
+
+  // Probeer medewerkers met VCA kenmerk op te halen
+  // XPS endpoints kunnen variëren per installatie
+  let employees = [];
+
+  try {
+    // Endpoint 1: Persons/medewerkers
+    const resp = await fetch(`${cfg.xpsUrl}/persons?limit=500`, { headers });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+    const data = await resp.json();
+
+    // XPS geeft doorgaans een lijst terug in data.items of data.data
+    const persons = data.items || data.data || data || [];
+
+    // Filter op VCA kenmerk
+    employees = persons
+      .map(p => parseXPSEmployee(p, cfg.xpsVcaField))
+      .filter(e => e.hasVca);
+
+  } catch (err) {
+    // Fallback: probeer /employees endpoint
+    try {
+      const resp2 = await fetch(`${cfg.xpsUrl}/employees?limit=500`, { headers });
+      if (!resp2.ok) throw new Error(`HTTP ${resp2.status}`);
+      const data2 = await resp2.json();
+      const persons2 = data2.items || data2.data || data2 || [];
+      employees = persons2
+        .map(p => parseXPSEmployee(p, cfg.xpsVcaField))
+        .filter(e => e.hasVca);
+    } catch (err2) {
+      throw new Error(`XPS API niet bereikbaar: ${err2.message}. Controleer URL en API-sleutel.`);
+    }
+  }
+
+  return employees;
+}
+
+function parseXPSEmployee(p, vcaField) {
+  // Generieke parser – past aan op jouw XPS data structuur
+  const name = [p.firstname, p.prefix, p.lastname].filter(Boolean).join(' ')
+    || p.name || p.full_name || `Medewerker ${p.id}`;
+
+  // VCA informatie kan op meerdere plekken zitten in XPS:
+  // p.skills[], p.certificates[], p.attributes[], p.custom_fields[]
+  const skills = p.skills || p.certificates || p.attributes || p.qualifications || [];
+  const vcaSkill = skills.find(s =>
+    (s.name || s.skill || s.certificate || s.description || '')
+      .toLowerCase().includes(vcaField.toLowerCase())
+  );
+
+  // Ook check op directe property
+  const directVca = p[vcaField] || p[vcaField.toLowerCase()] || p.vca || null;
+
+  const hasVca = !!(vcaSkill || directVca);
+  const vcaExpiry = vcaSkill?.expiry_date || vcaSkill?.valid_until || vcaSkill?.end_date
+    || directVca?.expiry || p.vca_expiry || null;
+  const vcaDate = vcaSkill?.date || vcaSkill?.obtained_at || vcaSkill?.start_date
+    || directVca?.date || p.vca_date || null;
+  const vcaType = vcaSkill?.type || vcaSkill?.name || vcaSkill?.level
+    || directVca?.type || 'VCA';
+
+  return {
+    id: p.id,
+    name,
+    hasVca,
+    vcaType,
+    vcaDate,
+    vcaExpiry,
+    raw: p
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MONEYBIRD API
+// ═══════════════════════════════════════════════════════════
+async function fetchMoneybird(cfg) {
+  const base = `https://moneybird.com/api/v2/${cfg.mbAdmin}`;
+  const headers = {
+    'Authorization': `Bearer ${cfg.mbToken}`,
+    'Content-Type': 'application/json',
+  };
+
+  // Haal alle sales invoices op (gepagineerd)
+  let allInvoices = [];
+  let page = 1;
+
+  while (true) {
+    const params = new URLSearchParams({ page, per_page: 100 });
+
+    // Datumfilter
+    if (cfg.fromDate) {
+      params.append('filter', `invoice_date_after:${cfg.fromDate}-01`);
+    }
+
+    const resp = await fetch(`${base}/sales_invoices.json?${params}`, { headers });
+    if (!resp.ok) {
+      const errText = await resp.text();
+      throw new Error(`HTTP ${resp.status}: ${errText.slice(0, 200)}`);
+    }
+
+    const invoices = await resp.json();
+    if (!invoices.length) break;
+    allInvoices = allInvoices.concat(invoices);
+    if (invoices.length < 100) break;
+    page++;
+
+    // Safety limit
+    if (page > 20) break;
+  }
+
+  // Filter factuurregels die VCA bevatten
+  const vcaTerm = cfg.mbVcaTerm.toLowerCase();
+  const lines = [];
+
+  for (const inv of allInvoices) {
+    // Datum filter
+    if (cfg.fromDate && inv.invoice_date < cfg.fromDate + '-01') continue;
+    if (cfg.toDate) {
+      const toEnd = cfg.toDate + '-31';
+      if (inv.invoice_date > toEnd) continue;
+    }
+
+    const details = inv.details || [];
+    for (const detail of details) {
+      const desc = (detail.description || '').toLowerCase();
+      if (desc.includes(vcaTerm)) {
+        lines.push({
+          invoiceId: inv.id,
+          invoiceNr: inv.invoice_id,
+          date: inv.invoice_date,
+          contact: inv.contact?.company_name || inv.contact?.firstname + ' ' + inv.contact?.lastname || 'Onbekend',
+          description: detail.description,
+          amount: parseFloat(detail.amount) || 1,       // hoeveelheid (uren)
+          price: parseFloat(detail.price) || 0,          // prijs per uur
+          total: parseFloat(detail.total_price_incl_tax) || parseFloat(detail.total_price_excl_tax) || 0,
+          state: inv.state,
+          ledger: detail.ledger_account_id,
+        });
+      }
+    }
+  }
+
+  return lines;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════════════
+function renderDashboard(cfg) {
+  const now = new Date();
+
+  // ── KPIs ──
+  const totalUren = mbInvoiceLines.reduce((s, l) => s + l.amount, 0);
+  const totalOmzet = mbInvoiceLines.reduce((s, l) => s + l.total, 0);
+  const medCount = xpsEmployees.length;
+
+  // Verlopen / bijna verlopen VCA (binnen 90 dagen)
+  const expiring = xpsEmployees.filter(e => {
+    if (!e.vcaExpiry) return false;
+    const expDate = new Date(e.vcaExpiry);
+    const daysLeft = (expDate - now) / 86400000;
+    return daysLeft < 90;
+  }).length;
+
+  document.getElementById('kpi-total-uren').textContent =
+    mbInvoiceLines.length ? Math.round(totalUren) + ' u' : '—';
+  document.getElementById('kpi-total-sub').textContent =
+    `${mbInvoiceLines.length} factuurregels met VCA`;
+
+  document.getElementById('kpi-omzet').textContent =
+    mbInvoiceLines.length ? '€' + totalOmzet.toLocaleString('nl-NL', {minimumFractionDigits:0}) : '—';
+  document.getElementById('kpi-omzet-sub').textContent =
+    mbInvoiceLines.length ? `Gem. €${(totalOmzet/totalUren || 0).toFixed(2)}/uur` : 'Geen factuurdata';
+
+  document.getElementById('kpi-medewerkers').textContent =
+    xpsEmployees.length ? medCount : '—';
+  document.getElementById('kpi-med-sub').textContent =
+    xpsEmployees.length ? `In XPS gevonden` : 'Geen XPS data';
+
+  document.getElementById('kpi-verlopen').textContent =
+    xpsEmployees.length ? expiring : '—';
+  document.getElementById('kpi-verl-sub').textContent =
+    xpsEmployees.length ? 'Verlopen of <90 dagen' : 'Geen XPS data';
+
+  // ── BAR CHART ──
+  renderBarChart();
+
+  // ── TABLES ──
+  renderEmployeesTable(now);
+  renderInvoicesTable();
+}
+
+function renderBarChart() {
+  const container = document.getElementById('bar-chart-content');
+
+  // Groepeer uren per medewerker (op naam uit factuuromschrijving of contact)
+  // Als we XPS data hebben, koppel op naam; anders groepeer op contactnaam
+  const byContact = {};
+  for (const line of mbInvoiceLines) {
+    const key = line.contact;
+    byContact[key] = (byContact[key] || 0) + line.amount;
+  }
+
+  const sorted = Object.entries(byContact)
+    .sort((a,b) => b[1] - a[1])
+    .slice(0, 15);
+
+  if (!sorted.length) {
+    container.innerHTML = '<div class="empty">Geen VCA factuurdata gevonden. Controleer je Moneybird configuratie en de VCA zoekterm.</div>';
+    return;
+  }
+
+  const max = sorted[0][1];
+  const colors = ['#4fffb0','#7b61ff','#ff6b35','#ffd32a','#4fffb0'];
+
+  container.innerHTML = sorted.map(([name, hours], i) => {
+    const pct = Math.max(8, (hours / max) * 100);
+    const color = colors[i % colors.length];
+    return `
+      <div class="bar-row">
+        <div class="bar-label" title="${name}">${name}</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${pct}%;background:${color}">
+            ${Math.round(hours)}u
+          </div>
+        </div>
+        <div class="bar-hours">${Math.round(hours)} uur</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderEmployeesTable(now) {
+  const tbody = document.getElementById('employees-table');
+
+  if (!xpsEmployees.length) {
+    // Als geen XPS data, toon unieke namen uit Moneybird
+    if (mbInvoiceLines.length) {
+      const contacts = [...new Set(mbInvoiceLines.map(l => l.contact))];
+      tbody.innerHTML = contacts.map(name => {
+        const uren = mbInvoiceLines.filter(l => l.contact === name).reduce((s,l) => s + l.amount, 0);
+        return `
+          <tr>
+            <td>${name}</td>
+            <td><span class="badge badge-neutral">Onbekend</span></td>
+            <td class="mono">—</td>
+            <td class="mono">—</td>
+            <td><span class="badge badge-neutral">Geen XPS data</span></td>
+            <td>—</td>
+            <td class="mono">${Math.round(uren)} uur</td>
+          </tr>
+        `;
+      }).join('');
+    } else {
+      tbody.innerHTML = '<tr><td colspan="7"><div class="empty">Geen medewerkers gevonden. Controleer XPS configuratie.</div></td></tr>';
+    }
+    return;
+  }
+
+  tbody.innerHTML = xpsEmployees.map(emp => {
+    // Gekoppelde uren vanuit Moneybird (op naam match)
+    const uren = mbInvoiceLines
+      .filter(l => l.contact.toLowerCase().includes(emp.name.toLowerCase().split(' ')[0]))
+      .reduce((s,l) => s + l.amount, 0);
+
+    // Status berekenen
+    let statusBadge = '';
+    let expiryBar = '—';
+
+    if (!emp.vcaExpiry) {
+      statusBadge = '<span class="badge badge-neutral">Geen datum</span>';
+    } else {
+      const expDate = new Date(emp.vcaExpiry);
+      const daysLeft = Math.floor((expDate - now) / 86400000);
+      const totalDays = 365 * 5; // VCA geldig 5 jaar
+      const obtained = emp.vcaDate ? new Date(emp.vcaDate) : null;
+      const elapsed = obtained ? Math.floor((now - obtained) / 86400000) : 0;
+      const pct = Math.min(100, Math.max(0, (elapsed / totalDays) * 100));
+
+      let barColor = '#4fffb0';
+      if (daysLeft < 90) barColor = '#ffd32a';
+      if (daysLeft < 30 || daysLeft < 0) barColor = '#ff4757';
+
+      if (daysLeft < 0) {
+        statusBadge = '<span class="badge badge-danger">Verlopen</span>';
+      } else if (daysLeft < 30) {
+        statusBadge = `<span class="badge badge-danger">${daysLeft}d resterend</span>`;
+      } else if (daysLeft < 90) {
+        statusBadge = `<span class="badge badge-warn">${daysLeft}d resterend</span>`;
+      } else {
+        statusBadge = '<span class="badge badge-ok">Geldig</span>';
+      }
+
+      expiryBar = `
+        <div class="expiry-bar">
+          <div class="expiry-track">
+            <div class="expiry-fill" style="width:${pct}%;background:${barColor}"></div>
+          </div>
+          <span style="font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace">${daysLeft > 0 ? daysLeft + 'd' : 'verlopen'}</span>
+        </div>
+      `;
+    }
+
+    return `
+      <tr>
+        <td><strong>${emp.name}</strong></td>
+        <td><span class="badge badge-neutral">${emp.vcaType}</span></td>
+        <td class="mono">${emp.vcaDate ? new Date(emp.vcaDate).toLocaleDateString('nl-NL') : '—'}</td>
+        <td class="mono">${emp.vcaExpiry ? new Date(emp.vcaExpiry).toLocaleDateString('nl-NL') : '—'}</td>
+        <td>${statusBadge}</td>
+        <td>${expiryBar}</td>
+        <td class="mono">${uren > 0 ? Math.round(uren) + ' uur' : '—'}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderInvoicesTable() {
+  const tbody = document.getElementById('invoices-table');
+
+  if (!mbInvoiceLines.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty">Geen VCA-factuurregels gevonden. Controleer je Moneybird token en VCA zoekterm.</div></td></tr>';
+    return;
+  }
+
+  // Sorteer op datum desc
+  const sorted = [...mbInvoiceLines].sort((a,b) => b.date.localeCompare(a.date));
+
+  tbody.innerHTML = sorted.map(line => {
+    const stateBadge = {
+      'open': '<span class="badge badge-warn">Open</span>',
+      'late': '<span class="badge badge-danger">Te laat</span>',
+      'paid': '<span class="badge badge-ok">Betaald</span>',
+      'draft': '<span class="badge badge-neutral">Concept</span>',
+    }[line.state] || `<span class="badge badge-neutral">${line.state || '—'}</span>`;
+
+    return `
+      <tr>
+        <td class="mono">${line.invoiceNr || '—'}</td>
+        <td class="mono">${line.date ? new Date(line.date).toLocaleDateString('nl-NL') : '—'}</td>
+        <td>${line.contact}</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${line.description}">${line.description}</td>
+        <td class="mono">${line.amount} uur</td>
+        <td class="mono">€${line.total.toLocaleString('nl-NL', {minimumFractionDigits:2})}</td>
+        <td>${stateBadge}</td>
+      </tr>
+    `;
+  }).join('');
+}
+</script>
+</body>
+</html>
